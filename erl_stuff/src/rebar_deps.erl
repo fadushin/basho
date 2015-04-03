@@ -331,7 +331,12 @@ write_dot_attr(IoDev, [{Bflag, Name, _Repo, Vlist} | Deps]) ->
         true ->
             ?DOT_COLOR_MULT;
         _ ->
-            ?DOT_COLOR_SING
+            case Bflag of
+                true ->
+                    ?DOT_COLOR_SING;
+                _ ->
+                    ?DOT_COLOR_DFLT
+            end
     end,
     Owner = format_owner(Bflag),
     ok = io:format(IoDev,
@@ -347,19 +352,22 @@ write_dot_body(IoDev, [{_Bflag, Name, _Repo, Vlist} | Deps]) ->
 
 write_dot_elem(_IoDev, _Name, []) ->
     ok;
-write_dot_elem(IoDev, Name, [{{_RE, _Rev}, Dlist} | Deps]) ->
-    write_dot_deps(IoDev, Name, Dlist),
+write_dot_elem(IoDev, Name, [{{_RE, Rev}, Dlist} | Deps]) ->
+    write_dot_deps(IoDev, Name, Rev, Dlist),
     write_dot_elem(IoDev, Name, Deps).
 
-write_dot_deps(_IoDev, _Name, []) ->
+write_dot_deps(_IoDev, _Name, _Rev, []) ->
     ok;
-write_dot_deps(IoDev, Name, [Dep | Deps]) ->
-    ok = io:format(IoDev, "\t~s -> ~s;\n", [Dep, Name]),
-    write_dot_deps(IoDev, Name, Deps).
+write_dot_deps(IoDev, Name, Rev, [Dep | Deps]) ->
+    ok = io:format(IoDev, "\t~s -> ~s [label=\"~s\"];\n", [Dep, Name, revision_to_string(Rev)]),
+    write_dot_deps(IoDev, Name, Rev, Deps).
 
 write_dot_foot(IoDev, _Deps) ->
     io:put_chars(IoDev, dot_footer()).
 
+revision_to_string(Rev) when is_list(Rev) -> Rev;
+revision_to_string({_Label, Version}) ->
+    io_lib:format("~s", [Version]).
 %%
 %%  Formatters
 %%
@@ -647,11 +655,9 @@ The following options are recognized:
     -h
         This text is written to standard error and a non-zero result is
         returned.
-
 If any other parameter starting with '-' is provided, or any parameters are
 found following the <starting-path>, an error message is written to standard
 error, followed by this text, and a non-zero result is returned.
-
 On success, the script returns zero.
 ".
 
@@ -674,7 +680,6 @@ txt_header() ->
 # filters) they are grouped on separate lines, and each line is preceded with
 # a string of exclamation points.
 #=============================================================================
-
 ".
 
 -spec dot_header() -> string().
@@ -691,7 +696,6 @@ dot_header() ->
 digraph \"" ++ TL ++ " dependencies\"
 {
 \tnode [shape=" ++ ?DOT_NODE_SHAPE ++ ",color=" ++ ?DOT_COLOR_DFLT ++ "];
-
 ".
 
 -spec dot_footer() -> string().
@@ -707,4 +711,3 @@ dot_footer() ->
 
 
 -endif. % TEST
-
