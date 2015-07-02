@@ -1,0 +1,14 @@
+{application, dvv_fix,
+ [
+  {description, "An Erlang dvv_fix library"},
+  {vsn, "1"},
+  {modules, [
+             dvv_fix
+            ]},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {env, []}
+ ]}.
