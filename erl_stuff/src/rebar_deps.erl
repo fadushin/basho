@@ -86,6 +86,11 @@
 -define(DOT_COLOR_DFLT, "blue").
 -define(DOT_COLOR_SING, "green").
 -define(DOT_COLOR_MULT, "red").
+-define(DOT_COLOR_BLACK, "black").
+-define(DOT_COLOR_GREEN, "green").
+-define(DOT_COLOR_YELLOW, "yellow").
+-define(DOT_COLOR_RED, "red").
+
 
 %%======================================================================
 %%  API functions
@@ -329,6 +334,7 @@ write_dot_attr(IoDev, []) ->
 write_dot_attr(IoDev, [{Bflag, Name, _Repo, Vlist} | Deps]) ->
     Color = case length(Vlist) > 1 of
         true ->
+            %io:format("Multiple vlist: ~p~n", [Vlist]),
             ?DOT_COLOR_MULT;
         _ ->
             case Bflag of
@@ -359,7 +365,8 @@ write_dot_elem(IoDev, Name, [{{_RE, Rev}, Dlist} | Deps]) ->
 write_dot_deps(_IoDev, _Name, _Rev, []) ->
     ok;
 write_dot_deps(IoDev, Name, Rev, [Dep | Deps]) ->
-    ok = io:format(IoDev, "\t~s -> ~s [label=\"~s\"];\n", [Dep, Name, revision_to_string(Rev)]),
+    Color = revision_to_color(Rev),
+    ok = io:format(IoDev, "\t~s -> ~s [label=\"~s\",color=~s];\n", [Dep, Name, revision_to_string(Rev), Color]),
     write_dot_deps(IoDev, Name, Rev, Deps).
 
 write_dot_foot(IoDev, _Deps) ->
@@ -368,6 +375,11 @@ write_dot_foot(IoDev, _Deps) ->
 revision_to_string(Rev) when is_list(Rev) -> Rev;
 revision_to_string({_Label, Version}) ->
     io_lib:format("~s", [Version]).
+
+revision_to_color(Rev) when is_list(Rev) -> ?DOT_COLOR_BLACK;
+revision_to_color({tag, _Version}) -> ?DOT_COLOR_BLACK;
+revision_to_color({branch, _Version}) -> ?DOT_COLOR_RED.
+
 %%
 %%  Formatters
 %%
